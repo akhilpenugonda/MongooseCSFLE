@@ -43,24 +43,25 @@ async function run() {
       kmsProviders,
   });
 
-  const _key = await encryption.createDataKey('local');
-  await mongoose.connection.dropCollection('books');
-  await mongoose.connection.createCollection('books', {
-    validator: {
-        $jsonSchema: {
-        bsonType: 'object',
-        properties: {
-            // Automatically encrypt the 'name' property
-            name: {
-            encrypt: {
-                bsonType: 'string',
-                keyId: [_key],
-                algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
-            }
-        }
-        }
-    }
-  });
+  //This need to go into the shell or some initial script
+//  const _key = await encryption.createDataKey('local');
+//   await mongoose.connection.dropCollection('books');
+//   await mongoose.connection.createCollection('books', {
+//     validator: {
+//         $jsonSchema: {
+//         bsonType: 'object',
+//         properties: {
+//             // Automatically encrypt the 'name' property
+//             name: {
+//             encrypt: {
+//                 bsonType: 'string',
+//                 keyId: [_key],
+//                 algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
+//             }
+//         }
+//         }
+//     }
+//   });
 }
   
 
