@@ -23,7 +23,8 @@ async function run() {
     const key = Buffer.from(arr);
     const keyVaultNamespace = 'client.encryption';
     const kmsProviders = { local: { key } };
-    var connection = await mongoose.connect('mongodb+srv://admin:admin@cluster0.8dymixf.mongodb.net/?retryWrites=true&w=majority', {
+
+    var connection = await mongoose.connect('mongodb+srv://admin:admin@cluster0.8dymixf.mongodb.net', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       // Configure auto encryption
