@@ -37,22 +37,7 @@ async function run()
         kmsProviders,
     });
     const _key = await encryption.createDataKey('local');
-
-    var ClientSideFieldLevelEncryptionOptions = {
-        keyVaultNamespace,
-        kmsProviders,
-      }
-    encryptedClient = Mongo(
-        databaseConnection,
-        ClientSideFieldLevelEncryptionOptions
-      )
-    clientEncryption = encryptedClient.getClientEncryption();
-
-    let resp = clientEncryption.encrypt(
-    _key,
-    "Book Name 12",
-    "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-    )
+    
     db.command({collMod: "books", validator: {
         $jsonSchema: {
             bsonType: 'object',
@@ -68,16 +53,68 @@ async function run()
                 },
                 // Automatically encrypt the 'name' property
                 name: {
+                    // bsonType: 'string'
                 encrypt: {
                     bsonType: 'string',
                     keyId: [_key],
-                    algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
+                    algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' 
+                }
                 }
             }
             }
     }
     });
+    //updateData(db);
+  
+}
+async function updateData(db)
+{
+    var resp2 = await db.collection("books").find().forEach(
+        async function (elem) {
+            await db.collection("books").updateOne(
+                {
+                    _id: elem._id
+                },
+                {
+                    $set: {
+                        name: elem.name
+                    }
+                }
+            );
+        }
+    );
+}
+//No need as of now
+function customEncryption(databaseConnection, keyVaultNamespace, kmsProviders, _key, name)
+{
+    var ClientSideFieldLevelEncryptionOptions = {
+        keyVaultNamespace,
+        kmsProviders,
+      }
+    encryptedClient = Mongo(
+        databaseConnection,
+        ClientSideFieldLevelEncryptionOptions
+      )
+    clientEncryption = encryptedClient.getClientEncryption();
     
+    let resp = clientEncryption.encrypt(
+    _key,
+    name,
+    "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+    )
+}
+
+
+  
+    
+    /*
+    Did not work
+    // var resp = await db.collection("books").updateMany({}, 
+    //     {"$set": {"name": { "$concat": ["$category", " "]}}}
+    // )
+    //var resp = await db.collection("books").find({$where : () => (this.name != "123" && IsTheFieldEncrypted(this.name))}).toArray();
+    */
+    //No need of drop and create just validator update is fine
     // db.dropCollection('books');
     // db.createCollection('books', {
     //     validator: {
@@ -104,10 +141,6 @@ async function run()
     //         }
     //     }
     //   });
-}
-
-
-
 //   const client = await new MongoClient(
 //     applicationConfig.database.host,
 //     {
