@@ -6,6 +6,7 @@ const Encrypt = require('mongodb-client-encryption');
 // const base64 = require('uuid-base64');
 var Book = require('./Book.model');
 const { createCollection } = require('./Book.model');
+require('dotenv').config();
 
 // var db = 'mongodb+srv://admin:admin@cluster0.8dymixf.mongodb.net/?retryWrites=true&w=majority'; //mongosh "mongodb+srv://cluster0.8dymixf.mongodb.net/myFirstDatabase" --apiVersion 1 --username admin
 // mongoose.connect(db);
@@ -24,7 +25,7 @@ async function run() {
     const keyVaultNamespace = 'client.encryption';
     const kmsProviders = { local: { key } };
 
-    var connection = await mongoose.connect('mongodb+srv://admin:admin@cluster0.8dymixf.mongodb.net', {
+    var connection = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       // Configure auto encryption
@@ -153,7 +154,8 @@ app.put('/book/:id', function(req, res){
             _id: req.params.id
         }, 
         {$set: 
-            {title: req.body.title}
+            {title: req.body.title,
+            name: req.body.name}
         }, 
         {upsert: true}, 
         function(err, newBook){
