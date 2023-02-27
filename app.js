@@ -3,20 +3,12 @@ var app = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 const Encrypt = require('mongodb-client-encryption');
-// const base64 = require('uuid-base64');
 var Book = require('./Book.model');
-const { createCollection } = require('./Book.model');
 require('dotenv').config();
 
-// var db = 'mongodb+srv://admin:admin@cluster0.8dymixf.mongodb.net/?retryWrites=true&w=majority'; //mongosh "mongodb+srv://cluster0.8dymixf.mongodb.net/myFirstDatabase" --apiVersion 1 --username admin
-// mongoose.connect(db);
 run().catch(err => console.log(err));
 
 async function run() {
-    /* Step 1: Connect to MongoDB using autoEncryption */
-  
-    // Create a very basic key. You're responsible for making
-    // your key secure, don't use this in prod :)
     const arr = [];
     for (let i = 0; i < 96; ++i) {
       arr.push(i);
@@ -28,46 +20,19 @@ async function run() {
     var connection = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      // Configure auto encryption
       autoEncryption: {
         keyVaultNamespace, 
         kmsProviders
       }
     });
-    
-    /* Step 2: create a key and configure encryption using JSONschema */
-  
-    // Currently, mongodb-client-encryption exports a constructor
-    // that takes an instance of the mongodb module as a parameter
+
   const { ClientEncryption } = Encrypt;
   const encryption = new ClientEncryption(mongoose.connection.client, {
       keyVaultNamespace,
       kmsProviders,
   });
-
-  //This need to go into the shell or some initial script
-//  const _key = await encryption.createDataKey('local');
-//   await mongoose.connection.dropCollection('books');
-//   await mongoose.connection.createCollection('books', {
-//     validator: {
-//         $jsonSchema: {
-//         bsonType: 'object',
-//         properties: {
-//             // Automatically encrypt the 'name' property
-//             name: {
-//             encrypt: {
-//                 bsonType: 'string',
-//                 keyId: [_key],
-//                 algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
-//             }
-//         }
-//         }
-//     }
-//   });
 }
-  
 
-  
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
     extended: true
@@ -190,7 +155,6 @@ app.delete('/book/:id', function(req, res){
             {
                 res.sendStatus(204);
             }
-            
         }
     })
 })
@@ -199,26 +163,3 @@ app.listen(port, function()
 {
     console.log('app listening on port '+ port);
 });   
-
-
-//   // CSFLE is defined through JSON schema. Easiest way to set
-//   // a JSON schema on your collection is via `createCollection()`
-//   await mongoose.connection.dropCollection('tests').catch(() => {});
-//   await mongoose.connection.createCollection('tests', {
-//   validator: {
-//       $jsonSchema: {
-//       bsonType: 'object',
-//       properties: {
-//           // Automatically encrypt the 'name' property
-//           name: {
-//           encrypt: {
-//               bsonType: 'string',
-//               keyId: [_key],
-//               algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' }
-//           }
-//       }
-//       }
-//   }
-//   });
-//   const Model = mongoose.model('Test', mongoose.Schema({ name: String }));
-//   await Model.create({ name: 'super secret' });
