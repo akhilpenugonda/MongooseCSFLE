@@ -2,35 +2,16 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-const Encrypt = require('mongodb-client-encryption');
 var Book = require('./Book.model');
 require('dotenv').config();
 
 run().catch(err => console.log(err));
 
 async function run() {
-    const arr = [];
-    for (let i = 0; i < 96; ++i) {
-      arr.push(i);
-    }
-    const key = Buffer.from(arr);
-    const keyVaultNamespace = 'client.encryption';
-    const kmsProviders = { local: { key } };
-
     var connection = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      autoEncryption: {
-        keyVaultNamespace, 
-        kmsProviders
-      }
     });
-
-  const { ClientEncryption } = Encrypt;
-  const encryption = new ClientEncryption(mongoose.connection.client, {
-      keyVaultNamespace,
-      kmsProviders,
-  });
 }
 
 app.use(bodyParser.json())
