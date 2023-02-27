@@ -1,17 +1,16 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
-var Book = require('./Book.model');
+const { ObjectId } = require('mongodb');
 require('dotenv').config();
+var BookDataLayer = require('./DAL/BookDAL');
+const BookSchema = require('./Book.model');
+const Book = new BookDataLayer("books")
 
 run().catch(err => console.log(err));
 
 async function run() {
-    var connection = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    Book.connect();
 }
 
 app.use(bodyParser.json())
@@ -23,11 +22,11 @@ app.get('/', function(req, res)
     res.send('Hello there');
 });
 
-app.get('/books', function(req, res)
+app.get('/books', async function(req, res)
 {
     console.log('Getting all books');
-    Book.find({})
-    .exec(function(err, books){
+    var books = await Book.find({})
+    .then(function(books, err){
         if(err)
         {
             res.send('error has occurred');
@@ -44,9 +43,9 @@ app.get('/books/:id', function(req, res)
 {
     console.log('getting one book');
     Book.findOne({
-        _id: req.params.id
+        _id: new ObjectId(req.params.id)
     })
-    .exec(function(err, book){
+    .then(function(book, err){
         if(err)
         {
             res.send('Error Occurred');
@@ -62,13 +61,13 @@ app.get('/books/:id', function(req, res)
 app.post('/book', function(req, res){
     console.log('Creating a book');
 
-    var newBook = new Book();
+    var newBook = BookSchema;
     newBook.title = req.body.title;
     newBook.author = req.body.author;
     newBook.category = req.body.category;
     newBook.name = req.body.name;
 
-    newBook.save(function(err, book){
+    Book.insertOne(newBook).then(function(book, err){
         if(err)
         {
             res.send('error saving a book');
@@ -81,7 +80,7 @@ app.post('/book', function(req, res){
     });
 });
 app.post('/bookWhole', function(req, res){
-    Book.create(req.body, function(err, book){
+    Book.insertOne(req.body).then((book, err) => {
         if(err)
         {
             res.send('error saving a book');
@@ -97,14 +96,14 @@ app.post('/bookWhole', function(req, res){
 app.put('/book/:id', function(req, res){
     Book.findOneAndUpdate(
         {
-            _id: req.params.id
+            _id: new ObjectId(req.params.id)
         }, 
         {$set: 
             {title: req.body.title,
             name: req.body.name}
         }, 
-        {upsert: true}, 
-        function(err, newBook){
+        {upsert: true}).then(
+        function(newBook, err){
             if(err){
                 console.log('Error Occurred');
             }
@@ -117,9 +116,9 @@ app.put('/book/:id', function(req, res){
 });
 
 app.delete('/book/:id', function(req, res){
-    Book.findOneAndRemove({
-        _id: req.params.id
-    }, function(err, book){
+    Book.findOneAndDelete({
+        _id: new ObjectId(req.params.id)
+    }).then(function(book, err){
         if(err)
         {
             res.send('error deleting');
@@ -134,7 +133,7 @@ app.delete('/book/:id', function(req, res){
             }
             else
             {
-                res.sendStatus(204);
+                res.send(book);
             }
         }
     })
