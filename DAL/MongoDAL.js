@@ -10,6 +10,20 @@ class DataAccessLayer {
     await connection.connectToServer();
   }
 
+  async create(queryDocument, optionsDocument) {
+    if(queryDocument != null && queryDocument != undefined)
+    {
+      if(queryDocument.length > 0)
+      {
+        return this.insertMany(queryDocument);
+      }
+      else
+      {    
+        return this.insertOne(queryDocument);
+      }
+    }
+  }
+
   async find(queryDocument, optionsDocument) {
     let dbContext = await connection.getDb();
     let collectionContext = dbContext.collection(this.collection);
@@ -28,6 +42,13 @@ class DataAccessLayer {
     let dbContext  = await connection.getDb();
     let collectionContext = dbContext.collection(this.collection);
     var resp = await collectionContext.insertOne(queryDocument);
+    return resp;
+  }
+
+  async insertMany(queryDocument, optionsDocument) {
+    let dbContext  = await connection.getDb();
+    let collectionContext = dbContext.collection(this.collection);
+    var resp = await collectionContext.insertMany(queryDocument);
     return resp;
   }
 

@@ -13,7 +13,7 @@ let dbConnection = null;
 module.exports = {
   connectToServer: async function (callback) {
     var clientConnection = await client.connect();
-    dbConnection = clientConnection.db('test');
+    dbConnection = clientConnection.db('ALPDB');
   },
   getDb: async function () {
     if(dbConnection)

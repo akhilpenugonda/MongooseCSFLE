@@ -1,6 +1,1 @@
-/node_modules
-package-lock.json
-CSFLEReferences/node_modules
-.env
-package-lock.json
-node_modules/.package-lock.json
+node_modules

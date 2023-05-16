@@ -3,16 +3,34 @@ var app = express();
 var bodyParser = require('body-parser');
 const { ObjectId } = require('mongodb');
 require('dotenv').config();
-var BookDataLayer = require('./DAL/BookDAL');
+//var BookDataLayer = require('./DAL/BookDAL');
+var ALPDatabaseDAL = require('./DAL/ALPDatabaseDAL');
+var ALPMeetingDatabaseDAL = require('./DAL/ALPMeetingDatabaseDAL');
+var ALPMeetingsDAL = require('./DAL/ALPMeetingsDAL');
+var ALPSupervisionClientDAL = require('./DAL/ALPSupervisionClientDAL');
+
 const BookSchema = require('./Book.model');
-const Book = new BookDataLayer("books")
+const logics = require('./logics');
+//const Book = new BookDataLayer("books");
+const alpDatabase = new ALPDatabaseDAL();
+const scheduledMeetings = new ALPMeetingDatabaseDAL();
+const masterMeeting = new ALPMeetingsDAL();
+const supervision = new ALPSupervisionClientDAL();
+
+const cors = require('cors');
 
 run().catch(err => console.log(err));
 
 async function run() {
-    Book.connect();
+    alpDatabase.connect();
 }
-
+const corsOptions = {
+    origin: 'http://localhost:4200',
+    optionsSuccessStatus: 200
+  }
+  
+app.use(cors(corsOptions));
+  
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
     extended: true
@@ -22,10 +40,26 @@ app.get('/', function(req, res)
     res.send('Hello there');
 });
 
-app.get('/books', async function(req, res)
+app.get('/getall', async function(req, res)
 {
-    console.log('Getting all books');
-    var books = await Book.find({})
+    console.log('Getting all data');
+    var books = await alpDatabase.find({})
+    .then(function(books, err){
+        if(err)
+        {
+            res.send('error has occurred');
+        }
+        else
+        {
+            res.json(books);
+            console.log(books);
+        }
+    });
+});
+app.get('/getallmeets', async function(req, res)
+{
+    console.log('Getting all meetings data');
+    var books = await scheduledMeetings.find({})
     .then(function(books, err){
         if(err)
         {
@@ -39,10 +73,123 @@ app.get('/books', async function(req, res)
     });
 });
 
-app.get('/books/:id', function(req, res)
+app.post('/scheduleMeeting', function(req, res){
+    scheduledMeetings.create(req.body).then((meet, err) => {
+        if(err)
+        {
+            res.send('error saving the item');
+        }
+        else
+        {
+            console.log(meet);
+            res.send(meet);
+        }
+    });
+});
+
+app.put('/updateMeeting/:id', function(req, res){
+    scheduledMeetings.findOneAndUpdate(
+        {
+            _id: new ObjectId(req.params.id)
+        }, 
+        {$set: 
+            req.body
+        }, 
+        {upsert: true}).then(
+        function(newBook, err){
+            if(err){
+                console.log('Error Occurred');
+            }
+            else
+            {
+                console.log(newBook);
+                res.send(newBook);
+            }
+        });
+});
+app.post('/scheduleMeetingOld', function(req, res){
+    scheduledMeetings.insertMany(req.body).then((meet, err) => {
+        if(err)
+        {
+            res.send('error saving the item');
+        }
+        else
+        {
+            console.log(meet);
+            res.send(meet);
+        }
+    });
+});
+app.get('/masterMeetings', async function(req, res)
 {
-    console.log('getting one book');
-    Book.findOne({
+    console.log('Getting all meetings data');
+    var books = await masterMeeting.find({})
+    .then(function(books, err){
+        if(err)
+        {
+            res.send('error has occurred');
+        }
+        else
+        {
+            res.json(books);
+            console.log(books);
+        }
+    });
+});
+app.get('/supervisionClients', async function(req, res)
+{
+    console.log('Getting all supervision data');
+    var books = await supervision.find({})
+    .then(function(books, err){
+        if(err)
+        {
+            res.send('error has occurred');
+        }
+        else
+        {
+            res.json(books);
+            console.log(books);
+        }
+    });
+});
+app.get('/getSupervisorBTs/:supEmail', async function(req, res)
+{
+    console.log('Getting all data');
+    var books = await alpDatabase.find({"supervisorEmailAddress": req.params.supEmail})
+    .then(function(books, err){
+        if(err)
+        {
+            res.send('error has occurred');
+        }
+        else
+        {
+            res.json(books);
+            console.log(books);
+        }
+    });
+});
+
+app.get('/getToAlertSupervisors', async function(req, res)
+{
+    console.log('Getting data');
+    var books = await logics.ToAlertSuperVisors()
+    .then(function(books, err){
+        if(err)
+        {
+            res.send('error has occurred');
+        }
+        else
+        {
+            res.json(books);
+            console.log(books);
+        }
+    });
+});
+
+app.get('/item/:id', function(req, res)
+{
+    console.log('getting one item');
+    alpDatabase.findOne({
         _id: new ObjectId(req.params.id)
     })
     .then(function(book, err){
@@ -58,8 +205,8 @@ app.get('/books/:id', function(req, res)
     });
 });
 
-app.post('/book', function(req, res){
-    console.log('Creating a book');
+app.post('/post', function(req, res){
+    console.log('Creating an item');
 
     var newBook = BookSchema;
     newBook.title = req.body.title;
@@ -67,10 +214,10 @@ app.post('/book', function(req, res){
     newBook.category = req.body.category;
     newBook.name = req.body.name;
 
-    Book.insertOne(newBook).then(function(book, err){
+    alpDatabase.insertOne(newBook).then(function(book, err){
         if(err)
         {
-            res.send('error saving a book');
+            res.send('error saving the item');
         }
         else
         {
@@ -79,11 +226,11 @@ app.post('/book', function(req, res){
         }
     });
 });
-app.post('/bookWhole', function(req, res){
-    Book.insertOne(req.body).then((book, err) => {
+app.post('/itemWhole', function(req, res){
+    alpDatabase.insertOne(req.body).then((book, err) => {
         if(err)
         {
-            res.send('error saving a book');
+            res.send('error saving the item');
         }
         else
         {
@@ -93,8 +240,8 @@ app.post('/bookWhole', function(req, res){
     });
 });
 
-app.put('/book/:id', function(req, res){
-    Book.findOneAndUpdate(
+app.put('/updateItem/:id', function(req, res){
+    alpDatabase.findOneAndUpdate(
         {
             _id: new ObjectId(req.params.id)
         }, 
@@ -115,8 +262,8 @@ app.put('/book/:id', function(req, res){
         });
 });
 
-app.delete('/book/:id', function(req, res){
-    Book.findOneAndDelete({
+app.delete('/deleteItem/:id', function(req, res){
+    alpDatabase.findOneAndDelete({
         _id: new ObjectId(req.params.id)
     }).then(function(book, err){
         if(err)
