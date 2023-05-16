@@ -25,7 +25,7 @@ async function run() {
     alpDatabase.connect();
 }
 const corsOptions = {
-    origin: 'http://localhost:4200',
+    origin: 'http://alp-scheduler-ui.s3-website.us-east-2.amazonaws.com/',
     optionsSuccessStatus: 200
   }
   
