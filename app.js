@@ -29,15 +29,14 @@ async function run() {
 //     optionsSuccessStatus: 200
 //   }
   const corsOptions = {
-    origin: 'http://alp-scheduler-ui.s3-website.us-east-2.amazonaws.com/',
-    optionsSuccessStatus: 200
+    origin: '*'
   }
 app.use(cors(corsOptions));
-app.use(function(req, res, next){
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Origin", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
+// app.use(function(req, res, next){
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Origin", "Origin, X-Requested-With, Content-Type, Accept");
+//     next();
+// });
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
     extended: true
