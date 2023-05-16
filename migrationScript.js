@@ -53,12 +53,13 @@ async function run()
                 },
                 // Automatically encrypt the 'name' property
                 name: {
-                    bsonType: 'string'
-                // encrypt: {
-                //     bsonType: 'string',
-                //     keyId: [_key],
-                //     algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' 
-                // }
+                    //Alter the comments to enable and disable encryption
+                    // bsonType: 'string' 
+                    encrypt: {
+                        bsonType: 'string',
+                        keyId: [_key],
+                        algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic' 
+                    }
                 }
             }
             }
@@ -69,7 +70,7 @@ async function run()
 }
 async function updateData(db)
 {
-    var resp2 = await db.collection("books").find().forEach(
+    var response = await db.collection("books").find().forEach(
         async function (elem) {
             await db.collection("books").updateOne(
                 {
